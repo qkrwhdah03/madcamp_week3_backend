@@ -19,7 +19,6 @@ class APImanager:
             cursor = self.db_manager.get_cursor()
             cursor.execute(search_query)
             result = cursor.fetchone() # WE have to ensure that there is unique user_id..
-            
             if result:
                 return TRUE
             else :
@@ -28,7 +27,24 @@ class APImanager:
         except Exception as e :
             print(f"Error in API_login : {e}")
             return ERROR
-        
+    
+    def API_duplicate(self, user_id):
+        duplicate_request = f"""SELECT * FROM user WHERE user_id ='{user_id}';"""
+        try :
+            cursor = self.db_manager.get_cursor()
+            cursor.execute(duplicate_request)
+            result = cursor.fetchone()
+
+            if result:
+                return FALSE
+            else :
+                return TRUE
+            
+        except Exception as e:
+            print(f"Error in API_duplicate : {e}")
+            return ERROR
+
+
     def API_register(self, user_id, password, name, belong):
         save_register_query = f"""INSERT INTO user(user_id, password, name, belong) 
         VALUES('{user_id}', '{password}', '{name}', '{belong}')

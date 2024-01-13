@@ -14,8 +14,37 @@ class DBmanager:
         print("DB Existence Check Done")
 
         # Table User Check
-        self.check_table_user()
-        print("Table user Existence Check Done")
+        table_name = "user" 
+        self.check_table(table_name, f"""
+            CREATE TABLE {table_name} (
+                user_id VARCHAR(30) PRIMARY KEY,
+                password VARCHAR(300),
+                name VARCHAR(20),
+                belong VARCHAR(50)
+            )""")
+        print(f"Table {table_name} Existence Check Done")
+
+        # Table Project Check
+        table_name = "project"
+        self.check_table(table_name, f"""
+            CREATE TABLE {table_name} (
+                project_id INT AUTO_INCREMENT PRIMARY KEY,
+                project_name VARCHAR(30),
+                project_description VARCHAR(200)                 
+            )""")
+        print(f"Table {table_name} Existence Check Done")
+
+        # Table proejct belong Check
+        table_name = "project_belong"
+        self.check_table(table_name, f"""
+            CREATE TABLE {table_name} (
+                project_id INT, 
+                user_id VARCHAR(30), 
+                PRIMARY KEY (project_id, user_id),
+                FOREIGN KEY (project_id) REFERENCES project(project_id),
+                FOREIGN KEY (user_id) REFERENCES user(user_id)     
+            )""")
+        print(f"Table {table_name} Existence Check Done")
 
 
     def get_conn(self,):
@@ -47,28 +76,20 @@ class DBmanager:
         return
 
 
-    def check_table_user(self,):
-        self.cursor.execute(f"SHOW TABLES LIKE 'user'")
+    def check_table(self, table_name, table_create_query):
+        self.cursor.execute(f"SHOW TABLES LIKE '{table_name}'")
         result = self.cursor.fetchone()
         
         if not result:
-            create_user_table_query = """
-            CREATE TABLE user (
-                user_id VARCHAR(30) PRIMARY KEY,
-                password VARCHAR(300),
-                name VARCHAR(20),
-                belong VARCHAR(50)
-            )"""
-
             try :
-                self.cursor.execute(create_user_table_query)
-                print("Create Table user Successfully")
+                self.cursor.execute(table_create_query)
+                print(f"Create Table {table_name} Successfully")
             
             except Exception as e:
-                print(f"Create Table user ERROR : {e}")
+                print(f"Create Table {table_name} ERROR : {e}")
 
         else :
-             print("Table usser already Exists")
+             print(f"Table {table_name} already Exists")
         
         return 
 
