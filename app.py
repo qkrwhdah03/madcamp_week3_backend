@@ -11,11 +11,13 @@ USER = "week3_user"
 PASSWORD = "madcamp"
 ###############################################
 
+########## CODE for fail validity information #
+CODE = "NOT VALID"
+###############################################
 
 app = Flask(__name__)
 CORS(app)
 app.config['JSON_AS_ASCII'] = False # 한글깨짐 방지
-
 
 
 ##################################################
@@ -29,12 +31,18 @@ app.config['JSON_AS_ASCII'] = False # 한글깨짐 방지
 def main():
     return "Connection Done"
 
+# User 확인 API
+@app.route("/user", methods=['GET'])
+def user():
+    user_id = request.args.get('user_id')
+    return api.API_check_user(user_id)
+
 # Login 처리 API
 @app.route("/login", methods=['GET'])
 def login():
     user_id = request.args.get('user_id')
     password = request.args.get('user_pw')
-    print(user_id, password)
+    #print(user_id, password)
     return api.API_login(user_id, password)
 
 # 아이디 중복 확인 API
@@ -54,7 +62,7 @@ def register():
     password_check = data.get('password_check')
     name = data.get('name')
     belong = data.get('belong')
-    print(user_id, password, name, belong)
+    #print(user_id, password, name, belong)
 
     # 유효성 검사
     # 1. 비밀번호 일치 여부 
@@ -63,7 +71,6 @@ def register():
     # 4. name 길이 1~10
     # 5. belong 길이 1~25
     
-    CODE = "NOT VALID"
     if password != password_check:
         return CODE
     elif not (1<= len(user_id) <= 15):
@@ -76,17 +83,50 @@ def register():
     return api.API_register(user_id, password, name, belong)
 
 # 로그인 후, Profile 가져오는 API
-@app.route("/profile/<user_id>", methods=['GET'])
-def profile(user_id):
+@app.route("/profile", methods=['GET'])
+def profile():
+    user_id = request.args.get('user_id')
+    #print(user_id)
     return api.API_get_profile(user_id)
 
 
-@app.route("/create_project", methods=['GET'])
+@app.route("/create_project", methods=['POST'])
 def create_project():
     data = request.json
-    # title = data.get('title')
-    # description = data.get('description')
-    # team = data.get('team')
+    title = data.get('name')
+    description = data.get('description')
+    team = data.get('team')
+    leader = data.get('leader')
+
+    # 유효성 검사 + 프론트도 조건 추가 필요
+    if not(1<= len(title) <= 15): # 프로젝트 이름은 15자이하
+        return CODE
+    if not(0<= len(description) <= 50): # 프로젝트 설명 50자이하
+        return CODE
+    if not(1<= len(team)): # 팀원은 최소 한 명
+        return CODE
+    
+    return api.API_register_project(title, leader, description, team)
+
+
+@app.route("/delete_project", methods=['POST'])
+def delete_project():
+    data = request.json
+    project_id = data.get('project_id')
+    return api.API_delete_project(project_id)
+
+@app.route("/alert_project", methods = ['POST'])
+def alert_project():
+    data = request.json
+    user_id = data.get('user_id')
+    project_id = data.get('project_id')
+    project_name = data.get('project_name')
+    project_description = data.get('description')
+    team = data.get('participants')
+    todo = data.get('todo') 
+    appointment = data.get('appointment')
+
+    return api.API_alert_project(user_id, project_id, project_name, project_description, team, todo, appointment)
 
 
 

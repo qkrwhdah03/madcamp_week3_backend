@@ -30,7 +30,8 @@ class DBmanager:
             CREATE TABLE {table_name} (
                 project_id INT AUTO_INCREMENT PRIMARY KEY,
                 project_name VARCHAR(30),
-                project_description VARCHAR(200)                 
+                project_description VARCHAR(200),
+                project_leader VARCHAR(30)    
             )""")
         print(f"Table {table_name} Existence Check Done")
 
@@ -44,6 +45,29 @@ class DBmanager:
                 FOREIGN KEY (project_id) REFERENCES project(project_id),
                 FOREIGN KEY (user_id) REFERENCES user(user_id)     
             )""")
+        print(f"Table {table_name} Existence Check Done")
+
+        # Todo Table Check
+        table_name = "todo"
+        self.check_table(table_name, f"""
+            CREATE TABLE {table_name} (
+                todo_id INT AUTO_INCREMENT PRIMARY KEY,
+                project_id INT,
+                todo VARCHAR(100),
+                FOREIGN KEY(project_id) REFERENCES project(project_id)
+            );""")
+        print(f"Table {table_name} Existence Check Done")
+
+        
+        # Appointment Table
+        table_name = "appointment"
+        self.check_table(table_name, f"""
+            CREATE TABLE {table_name} (
+                appointment_id INT AUTO_INCREMENT PRIMARY KEY,
+                project_id INT,
+                appointment VARCHAR(100),
+                FOREIGN KEY(project_id) REFERENCES project(project_id)
+            );""")
         print(f"Table {table_name} Existence Check Done")
 
 
