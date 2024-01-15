@@ -38,10 +38,11 @@ def user():
     return api.API_check_user(user_id)
 
 # Login 처리 API
-@app.route("/login", methods=['GET'])
+@app.route("/login", methods=['POST'])
 def login():
-    user_id = request.args.get('user_id')
-    password = request.args.get('user_pw')
+    data = request.json
+    user_id = data.get('user_id')
+    password = data.get('user_pw')
     #print(user_id, password)
     return api.API_login(user_id, password)
 
@@ -129,6 +130,11 @@ def alert_project():
     #print(team)
     return api.API_alert_project(user_id, project_id, project_name, project_description, team, todo, appointment)
 
+@app.route("/set_schedule", methods=['POST'])
+def set_schedule():
+    data = request.json
+    schedule_list = data.get('schedule_list')
+    return api.API_set_schedule(schedule_list)
 
 
 if __name__ == "__main__":

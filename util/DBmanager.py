@@ -71,6 +71,20 @@ class DBmanager:
             );""")
         print(f"Table {table_name} Existence Check Done")
 
+        # USer Schedule Table
+        table_name = "schedule"
+        self.check_table(table_name, f"""
+            CREATE TABLE {table_name} (
+                schedule_id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id VARCHAR(30),
+                schedule_info VARCHAR(10),
+                dayofweek INT,
+                start_time INT,
+                length INT,
+                FOREIGN KEY(user_id) REFERENCES user(user_id)   
+        )""")
+        print(f"Table {table_name} Existence Check Done")
+
 
     def get_conn(self,):
         return self.db_conn

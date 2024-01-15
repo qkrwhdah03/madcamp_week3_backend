@@ -24,6 +24,7 @@ class APImanager:
             
         except Exception as e:
             print(f"Error in API_check_user : {e}")
+            traceback.print_exc()
             return ERROR
 
     def API_login(self, user_id, password):
@@ -44,6 +45,7 @@ class APImanager:
             
         except Exception as e :
             print(f"Error in API_login : {e}")
+            traceback.print_exc()
             return ERROR
     
     def API_duplicate(self, user_id):
@@ -60,6 +62,7 @@ class APImanager:
             
         except Exception as e:
             print(f"Error in API_duplicate : {e}")
+            traceback.print_exc()
             return ERROR
 
 
@@ -76,6 +79,7 @@ class APImanager:
             return TRUE
         except Exception as e:
             print(f"Error in API_register : {e}")
+            traceback.print_exc()
             self.db_manager.get_conn().rollback()
             return ERROR
         
@@ -141,7 +145,18 @@ class APImanager:
                     appointments.append(apps_item)
                 appointment_list.append(appointments)
 
-            return self.convert.convert_profile_info(user_info_result, project_list, teammate_list, todo_list, appointment_list)
+
+            # Get Project Schedule
+            query = f"""SELECT * FROM schedule WHERE user_id = '{user_id}';"""
+            cursor.execute(query)
+            result = cursor.fetchall()
+
+            schedule_list = []
+            for item in result:
+                schedule_list.append(item)
+                
+
+            return self.convert.convert_profile_info(user_info_result, project_list, teammate_list, todo_list, appointment_list, schedule_list)
 
         except Exception as e:
             print(f"Error in API_get_Profile : {e}")
@@ -169,6 +184,7 @@ class APImanager:
         
         except Exception as e:
             print(f"Error in API_register-project : {e}")
+            traceback.print_exc()
             self.db_manager.get_conn().rollback()
             return ERROR
         
@@ -186,6 +202,7 @@ class APImanager:
         
         except Exception as e:
             print(f"Error in API_delete_project : {e}")
+            traceback.print_exc()
             self.db_manager.get_conn().rollback()
             return ERROR
         
@@ -199,7 +216,6 @@ class APImanager:
             #result = cursor.fetchone() # Primary Key
             #if not result:
             #    return ERROR
-
             # Project Table 업데이트
             query = f"""UPDATE project SET project_name = '{project_name}', 
             project_description = '{project_description}'  
@@ -219,9 +235,13 @@ class APImanager:
             query = f"""DELETE FROM todo WHERE project_id = {str(project_id)}"""
             cursor.execute(query)
 
+            #print(todo)
             for todo_item in todo:
+                #todo_item = dict(todo_item)
+                print(todo_item, type(todo_item))
                 todo_text = todo_item['text']
                 todo_check = todo_item['isChecked']
+                print(todo_check, type(todo_check))
                 query = f"""INSERT INTO todo(project_id, todo, todo_check) 
                             VALUES({str(project_id)},'{todo_text}','{todo_check}');"""
                 cursor.execute(query)
@@ -231,9 +251,11 @@ class APImanager:
             cursor.execute(query)
 
             for app_item in appointment:
+                app_item = dict(app_item)
+             
                 app_text = app_item['text']
                 app_check = app_item['isChecked']
-                query = f"""INSERT INTO appointment(project_id, appointment, appointment_check) VALUES({str(project_id)},'{app_text}','{app_check}')"""
+                query = f"""INSERT INTO appointment(project_id, appointment, appointment_check) VALUES({str(project_id)},'{app_text}','{app_check}');"""
                 cursor.execute(query)
 
             self.db_manager.get_conn().commit()
@@ -243,5 +265,35 @@ class APImanager:
             print(f"Error in API_alert_project : {e}")
             traceback.print_exc()
             self.db_manager.get_conn().rollback()
+            return ERROR
+        
+    def API_set_schedule(self, schedule_list):
+        try:
+
+            # user_id의 스케줄을 초기화
+            user_id = schedule_list[0]['user_id']
+            query = f"""DELETE FROM schedule WHERE user_id = '{user_id}';"""
+
+            cursor = self.db_manager.get_cursor()
+            cursor.execute(query)
+
+            for schedule in schedule_list:
+                user_id = schedule['user_id']
+                schedule_info = schedule['schedule_info']
+                dayofweek = schedule['dayofweek']
+                start_time = schedule['start_time']
+                length = schedule['length']
+
+                query = f"""INSERT INTO schedule(user_id, schedule_info, dayofweek, start_time, length)
+                    VALUES('{user_id}','{schedule_info}',{str(dayofweek)},{str(start_time)},{str(length)});"""
+                cursor.execute(query)
+
+            self.db_manager.get_conn().commit()
+
+            return TRUE
+        except Exception as e:
+            self.db_manager.get_conn().rollback()
+            print(f"Error in API_set_schedule : {e}")
+            traceback.print_exc()
             return ERROR
         
