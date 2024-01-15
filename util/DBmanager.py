@@ -54,10 +54,10 @@ class DBmanager:
                 todo_id INT AUTO_INCREMENT PRIMARY KEY,
                 project_id INT,
                 todo VARCHAR(100),
+                todo_check VARCHAR(10),
                 FOREIGN KEY(project_id) REFERENCES project(project_id)
             );""")
         print(f"Table {table_name} Existence Check Done")
-
         
         # Appointment Table
         table_name = "appointment"
@@ -66,6 +66,7 @@ class DBmanager:
                 appointment_id INT AUTO_INCREMENT PRIMARY KEY,
                 project_id INT,
                 appointment VARCHAR(100),
+                appointment_check VARCHAR(10),
                 FOREIGN KEY(project_id) REFERENCES project(project_id)
             );""")
         print(f"Table {table_name} Existence Check Done")

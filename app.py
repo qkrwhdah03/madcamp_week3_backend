@@ -122,10 +122,11 @@ def alert_project():
     project_id = data.get('project_id')
     project_name = data.get('project_name')
     project_description = data.get('description')
-    team = data.get('participants')
+    team = data.get('participants').split(',')
     todo = data.get('todo') 
     appointment = data.get('appointment')
-
+    #print(data)
+    #print(team)
     return api.API_alert_project(user_id, project_id, project_name, project_description, team, todo, appointment)
 
 

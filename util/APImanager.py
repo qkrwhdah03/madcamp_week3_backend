@@ -1,5 +1,5 @@
 from util.JSONconverter import JSONconverter
-
+import traceback
 
 # API 실행 결과 값 CODE
 TRUE = "True" # On Success
@@ -100,6 +100,8 @@ class APImanager:
             
             project_list = []
             teammate_list = []
+            todo_list = []
+            appointment_list = []
             
             for row in result:
                 project_id = row[0] # project_belong의 project_id index
@@ -119,10 +121,31 @@ class APImanager:
                     teammate.append(team_user[1])  # project_belong의 user_id index
                 teammate_list.append(teammate)
 
-            return self.convert.convert_profile_info(user_info_result, project_list, teammate_list)
+                # Get Project Todo
+                get_project_todo_query =f"""SELECT * FROM todo WHERE project_id = '{str(project_id)}';"""
+                cursor.execute(get_project_todo_query)
+                todos = cursor.fetchall()
+
+                todo = []
+                for todo_item in todos :
+                    todo.append(todo_item)
+                todo_list.append(todo)
+
+                # Get Project Appointment
+                get_project_appointment_query =f"""SELECT * FROM appointment WHERE project_id = '{str(project_id)}';"""
+                cursor.execute(get_project_appointment_query)
+                apps = cursor.fetchall()
+
+                appointments = []
+                for apps_item in apps:
+                    appointments.append(apps_item)
+                appointment_list.append(appointments)
+
+            return self.convert.convert_profile_info(user_info_result, project_list, teammate_list, todo_list, appointment_list)
 
         except Exception as e:
             print(f"Error in API_get_Profile : {e}")
+            traceback.print_exc()
             return ERROR   
         
     def API_register_project(self, name, leader, description, team_list): # Project Leader 추가하기 - 받아와야함
@@ -170,19 +193,21 @@ class APImanager:
     def API_alert_project(self, user_id, project_id, project_name, project_description, team, todo, appointment):
         try :
             # 유효성 검사 user_id project leader인지 확인 - 다른 사람이 삭제했을 수도 있음
-            query = f"""SELECT * FROM project WHERE project_leader = '{user_id}' AND project_id = {str(project_id)};"""
+            #query = f"""SELECT * FROM project WHERE project_leader = '{user_id}' AND project_id = {str(project_id)};"""
             cursor = self.db_manager.get_cursor()
-            cursor.execute(query)
-            result = cursor.fetchone() # Primary Key
-            if not result:
-                return ERROR
+            #cursor.execute(query)
+            #result = cursor.fetchone() # Primary Key
+            #if not result:
+            #    return ERROR
 
-            query = f"""UPDATE project SET project_name = {project_name}, 
-            project_description = {project_description}  
+            # Project Table 업데이트
+            query = f"""UPDATE project SET project_name = '{project_name}', 
+            project_description = '{project_description}'  
             WHERE project_id = {str(project_id)};
             """
             cursor.execute(query)
 
+            # Proejct_belong table 업데이트
             query = f"""DELETE FROM project_belong WHERE project_id = {str(project_id)};"""
             cursor.execute(query)
 
@@ -190,11 +215,33 @@ class APImanager:
                 query = f"""INSERT INTO project_belong(project_id, user_id) VALUES({str(project_id)}, '{team_id}');"""
                 cursor.execute(query)
 
+            #Todo Table
+            query = f"""DELETE FROM todo WHERE project_id = {str(project_id)}"""
+            cursor.execute(query)
+
+            for todo_item in todo:
+                todo_text = todo_item['text']
+                todo_check = todo_item['isChecked']
+                query = f"""INSERT INTO todo(project_id, todo, todo_check) 
+                            VALUES({str(project_id)},'{todo_text}','{todo_check}');"""
+                cursor.execute(query)
+
+            #Appointment Table
+            query = f"""DELETE FROM appointment WHERE project_id = {str(project_id)};"""
+            cursor.execute(query)
+
+            for app_item in appointment:
+                app_text = app_item['text']
+                app_check = app_item['isChecked']
+                query = f"""INSERT INTO appointment(project_id, appointment, appointment_check) VALUES({str(project_id)},'{app_text}','{app_check}')"""
+                cursor.execute(query)
+
             self.db_manager.get_conn().commit()
             return TRUE
         
         except Exception as e:
-            print(f"Error in API_delete_project : {e}")
+            print(f"Error in API_alert_project : {e}")
+            traceback.print_exc()
             self.db_manager.get_conn().rollback()
             return ERROR
         
