@@ -60,3 +60,6 @@ class JSONconverter :
     
     def convert_user_search_result(self, search_list):
         return json.dumps({'result':search_list}, ensure_ascii=False)
+    
+    def convert_gather_schedule(self, gather, person):
+        return json.dumps({'gathered_schedule': gather, 'who':person}, ensure_ascii=False)

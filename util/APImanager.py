@@ -241,7 +241,7 @@ class APImanager:
                 print(todo_item, type(todo_item))
                 todo_text = todo_item['text']
                 todo_check = todo_item['isChecked']
-                print(todo_check, type(todo_check))
+                #print(todo_check, type(todo_check))
                 query = f"""INSERT INTO todo(project_id, todo, todo_check) 
                             VALUES({str(project_id)},'{todo_text}','{todo_check}');"""
                 cursor.execute(query)
@@ -267,11 +267,10 @@ class APImanager:
             self.db_manager.get_conn().rollback()
             return ERROR
         
-    def API_set_schedule(self, schedule_list):
+    def API_set_schedule(self, user_id, schedule_list):
         try:
 
             # user_id의 스케줄을 초기화
-            user_id = schedule_list[0]['user_id']
             query = f"""DELETE FROM schedule WHERE user_id = '{user_id}';"""
 
             cursor = self.db_manager.get_cursor()
@@ -297,3 +296,31 @@ class APImanager:
             traceback.print_exc()
             return ERROR
         
+    def API_gather_schedule(self, team):
+        try :
+            gather = [[0 for i in range(7)] for j in range(24)]
+            person = [[[] for i in range(7)] for j in range(24)]
+            for user in team:
+                cursor = self.db_manager.get_cursor()
+
+                query = f"""SELECT * FROM schedule WHERE user_id = '{user}';"""
+                cursor.execute(query)
+                result = cursor.fetchall()
+
+                for schedule in result:
+                    id = schedule[1] # user_id
+                    x = schedule[4] # start_time
+                    y = schedule[3] # dayofweek
+                    t = schedule[5] # lenght
+                    i = 0
+                    while i<t:
+                        gather[x+i][y] += 1
+                        person[x+i][y].append(id)
+                        i+=1
+
+            return self.convert.convert_gather_schedule(gather, person)
+
+        except Exception as e :
+            print(f"Error in API_gather_schedule : {e}")
+            traceback.print_exc()
+            return ERROR

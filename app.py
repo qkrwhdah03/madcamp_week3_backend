@@ -22,7 +22,7 @@ app.config['JSON_AS_ASCII'] = False # 한글깨짐 방지
 
 ##################################################
 
-#   API 
+#   API List
 
 ##################################################
 
@@ -34,22 +34,22 @@ def main():
 # User 확인 API
 @app.route("/user", methods=['GET'])
 def user():
-    user_id = request.args.get('user_id')
+    user_id = str(request.args.get('user_id'))
     return api.API_check_user(user_id)
 
 # Login 처리 API
 @app.route("/login", methods=['POST'])
 def login():
     data = request.json
-    user_id = data.get('user_id')
-    password = data.get('user_pw')
+    user_id = str(data.get('user_id'))
+    password = str(data.get('user_pw'))
     #print(user_id, password)
     return api.API_login(user_id, password)
 
 # 아이디 중복 확인 API
 @app.route("/duplicate", methods=['GET'])
 def duplicate():
-    user_id = request.args.get('user_id')
+    user_id = str(request.args.get('user_id'))
     return api.API_duplicate(user_id)
 
 
@@ -58,11 +58,11 @@ def duplicate():
 def register():
     # POST 결과 얻어오기
     data = request.json
-    user_id = data.get('user_id')
-    password = data.get('password')
-    password_check = data.get('password_check')
-    name = data.get('name')
-    belong = data.get('belong')
+    user_id = str(data.get('user_id'))
+    password = str(data.get('password'))
+    password_check = str(data.get('password_check'))
+    name = str(data.get('name'))
+    belong = str(data.get('belong'))
     #print(user_id, password, name, belong)
 
     # 유효성 검사
@@ -86,7 +86,7 @@ def register():
 # 로그인 후, Profile 가져오는 API
 @app.route("/profile", methods=['GET'])
 def profile():
-    user_id = request.args.get('user_id')
+    user_id = str(request.args.get('user_id'))
     #print(user_id)
     return api.API_get_profile(user_id)
 
@@ -94,10 +94,10 @@ def profile():
 @app.route("/create_project", methods=['POST'])
 def create_project():
     data = request.json
-    title = data.get('name')
-    description = data.get('description')
+    title = str(data.get('name'))
+    description = str(data.get('description'))
     team = data.get('team')
-    leader = data.get('leader')
+    leader = str(data.get('leader'))
 
     # 유효성 검사 + 프론트도 조건 추가 필요
     if not(1<= len(title) <= 15): # 프로젝트 이름은 15자이하
@@ -113,16 +113,16 @@ def create_project():
 @app.route("/delete_project", methods=['POST'])
 def delete_project():
     data = request.json
-    project_id = data.get('project_id')
+    project_id = int(data.get('project_id'))
     return api.API_delete_project(project_id)
 
 @app.route("/alert_project", methods = ['POST'])
 def alert_project():
     data = request.json
-    user_id = data.get('user_id')
-    project_id = data.get('project_id')
-    project_name = data.get('project_name')
-    project_description = data.get('description')
+    user_id = str(data.get('user_id'))
+    project_id = int(data.get('project_id'))
+    project_name = str(data.get('project_name'))
+    project_description = str(data.get('description'))
     team = data.get('participants').split(',')
     todo = data.get('todo') 
     appointment = data.get('appointment')
@@ -133,8 +133,15 @@ def alert_project():
 @app.route("/set_schedule", methods=['POST'])
 def set_schedule():
     data = request.json
+    user_id = str(data.get('user_id')) 
     schedule_list = data.get('schedule_list')
-    return api.API_set_schedule(schedule_list)
+    return api.API_set_schedule(user_id, schedule_list)
+
+@app.route("/gather_schedule", methods=['POST'])
+def gather_schedule():
+    data = request.json
+    team = data.get('participants')
+    return api.API_gather_schedule(team)
 
 
 if __name__ == "__main__":
