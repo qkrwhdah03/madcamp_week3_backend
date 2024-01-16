@@ -85,7 +85,7 @@ class APImanager:
             cursor = conn.cursor()
             cursor.execute(save_register_query)
 
-            self.db_manager.get_conn().commit()
+            conn.commit()
             cursor.close()
             conn.close()
 
@@ -217,7 +217,7 @@ class APImanager:
             query = f"""DELETE FROM project WHERE project_id = {str(project_id)};"""
             cursor.execute(query)
             
-            self.db_manager.get_conn().commit()
+            conn.commit()
             cursor.close()
             conn.close()
             return TRUE
@@ -319,7 +319,7 @@ class APImanager:
 
             return TRUE
         except Exception as e:
-            connn.rollback()
+            conn.rollback()
             print(f"Error in API_set_schedule : {e}")
             traceback.print_exc()
             return ERROR
@@ -355,5 +355,64 @@ class APImanager:
 
         except Exception as e :
             print(f"Error in API_gather_schedule : {e}")
+            traceback.print_exc()
+            return ERROR
+        
+    def API_get_project_info(self, user_id, project_id):
+        try:
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
+
+            get_project_info_query = f"""SELECT * FROM project WHERE project_id = {str(project_id)};"""
+            cursor.execute(get_project_info_query)
+            project = cursor.fetchone()  # project_id is PK
+                
+            # Get Project Team
+            get_project_team_query =f"""SELECT * FROM project_belong WHERE project_id = '{str(project_id)}';"""
+            cursor.execute(get_project_team_query)
+            team = cursor.fetchall() # 팀은 여러 명 가능
+            #print(team)
+            teammate = []
+            for team_user in team:
+                teammate.append(team_user[1])  # project_belong의 user_id index
+
+            # Get Project Todo
+            get_project_todo_query =f"""SELECT * FROM todo WHERE project_id = '{str(project_id)}';"""
+            cursor.execute(get_project_todo_query)
+            todos = cursor.fetchall()
+
+            todo = []
+            for todo_item in todos :
+                todo.append(todo_item)
+
+            # Get Project Appointment
+            get_project_appointment_query =f"""SELECT * FROM appointment WHERE project_id = '{str(project_id)}';"""
+            cursor.execute(get_project_appointment_query)
+            apps = cursor.fetchall()
+
+            appointments = []
+            for apps_item in apps:
+                appointments.append(apps_item)
+
+
+            # Get Schedule
+            query = f"""SELECT * FROM schedule WHERE user_id = '{user_id}';"""
+            cursor.execute(query)
+            result = cursor.fetchall()
+            cursor.close()
+            conn.close()
+
+            schedule_list = []
+            for item in result:
+                schedule_list.append(item)
+
+
+            cursor.close()
+            conn.close()
+
+            return self.convert.convert_project_info(project, teammate, todo, appointments, schedule_list)
+
+        except Exception as e : 
+            print(f"Error in API_get_project_info : {e}")
             traceback.print_exc()
             return ERROR

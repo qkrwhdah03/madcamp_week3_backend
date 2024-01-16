@@ -143,6 +143,12 @@ def gather_schedule():
     team = data.get('participants')
     return api.API_gather_schedule(team)
 
+@app.route("/get_project_info", methods=['GET'])
+def get_project_info():
+    user_id = str(request.args.get('user_id'))
+    project_id = int(request.args.get('project_id'))
+    return api.API_get_project_info(user_id, project_id)
+
 
 if __name__ == "__main__":
     db_manager = DBmanager(HOST, USER, PORT, PASSWORD, DBNAME)
