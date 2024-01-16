@@ -6,9 +6,10 @@ class DBmanager:
     def __init__(self, host, user, port, passwd, dbname):
         # Connect to Local MYSQL DB
         self.db_name = dbname
-        self.db_conn = pymysql.connect(host = host, user=user, port = port, passwd = passwd, charset="utf8") # connection to mysql
-        self.cursor = self.get_new_cursor()
-        print("Connection to MYSQL Done")
+        self.host = host
+        self.user = user
+        self.port = port 
+        self.passwd = passwd
         
         self.check_db_exist(dbname) # name must be unique
         print("DB Existence Check Done")
@@ -85,43 +86,41 @@ class DBmanager:
         )""")
         print(f"Table {table_name} Existence Check Done")
 
-
     def get_conn(self,):
-        return self.db_conn
+        try :
+           return pymysql.connect(host=self.host, user=self.user, port =self.port, passwd = self.passwd, db = self.db_name, charset="utf8") # connection to mysql
+        except Exception as e :
+            print(f"Fail to get connection with DB {e}")
+            return None
     
-    def get_cursor(self,):
-        return self.cursor
-    
-    def get_new_cursor(self,):
-        try:
-            cursor = self.db_conn.cursor()
-            return cursor
-        except  pymysql.err.InternalError as e:
-            print(f"Error while getting cursor: {e}")
-
-
     def check_db_exist(self, db_name):
-        self.cursor.execute(f"SHOW DATABASES LIKE '{db_name}';") # name must be unique
-        result = self.cursor.fetchone()
+        conn = self.get_conn()
+        cursor = conn.cursor()
+        cursor.execute(f"SHOW DATABASES LIKE '{db_name}';") # name must be unique
+        result = cursor.fetchone()
 
         if not result: # No such db -> Create Database
-            self.cursor.execute(f"CREATE DATABASE '{db_name}';")
-            self.cursor.commit()
+            cursor.execute(f"CREATE DATABASE '{db_name}';")
+            cursor.commit()
             print(f"Database {db_name} is created successfully")
         else :
             print(f"Database {db_name} is already created")
         
-        self.cursor.execute(f"USE {self.db_name};")
+        cursor.execute(f"USE {self.db_name};")
+        cursor.close()
+        conn.close()
         return
 
 
     def check_table(self, table_name, table_create_query):
-        self.cursor.execute(f"SHOW TABLES LIKE '{table_name}'")
-        result = self.cursor.fetchone()
+        conn = self.get_conn()
+        cursor = conn.cursor()
+        cursor.execute(f"SHOW TABLES LIKE '{table_name}'")
+        result = cursor.fetchone()
         
         if not result:
             try :
-                self.cursor.execute(table_create_query)
+                cursor.execute(table_create_query)
                 print(f"Create Table {table_name} Successfully")
             
             except Exception as e:
@@ -129,10 +128,10 @@ class DBmanager:
 
         else :
              print(f"Table {table_name} already Exists")
-        
+        cursor.close()
+        conn.close()
         return 
 
 
     def __del__(self,):
-        if self.db_conn:
-            self.db_conn.close() # close connection
+        return

@@ -12,11 +12,15 @@ class APImanager:
         self.convert = JSONconverter()
 
     def API_check_user(self, user_id):
-        try : 
+        try :
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             search_query = f"""SELECT * FROM user WHERE user_id = '{user_id}'; """
-            cursor = self.db_manager.get_cursor()
+            cursor = conn.cursor()
             cursor.execute(search_query)
             result = cursor.fetchone()
+            cursor.close()
+            conn.close()
             if result:
                 return TRUE
             else :
@@ -35,9 +39,12 @@ class APImanager:
                 FROM user
                 WHERE user_id = '{user_id}' AND password = '{password}';
             """
-            cursor = self.db_manager.get_cursor()
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             cursor.execute(search_query)
             result = cursor.fetchone() # WE have to ensure that there is unique user_id..
+            cursor.close()
+            conn.close()
             if result:
                 return TRUE
             else :
@@ -51,9 +58,12 @@ class APImanager:
     def API_duplicate(self, user_id):
         try :
             duplicate_request = f"""SELECT * FROM user WHERE user_id ='{user_id}';"""
-            cursor = self.db_manager.get_cursor()
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             cursor.execute(duplicate_request)
             result = cursor.fetchone()
+            cursor.close()
+            conn.close()
 
             if result:
                 return FALSE
@@ -71,23 +81,27 @@ class APImanager:
             save_register_query = f"""INSERT INTO user(user_id, password, name, belong) 
             VALUES('{user_id}', '{password}', '{name}', '{belong}')
             """
-            cursor = self.db_manager.get_cursor()
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             cursor.execute(save_register_query)
 
             self.db_manager.get_conn().commit()
+            cursor.close()
+            conn.close()
 
             return TRUE
         except Exception as e:
             print(f"Error in API_register : {e}")
             traceback.print_exc()
-            self.db_manager.get_conn().rollback()
+            conn.rollback()
             return ERROR
         
     def API_get_profile(self, user_id):
         # User Table
         try : 
             get_profile_query = f"""SELECT * FROM user WHERE user_id = '{user_id}';"""
-            cursor = self.db_manager.get_cursor()
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             cursor.execute(get_profile_query)
             user_info_result = cursor.fetchone()
 
@@ -98,7 +112,6 @@ class APImanager:
             # Get Project id
             get_project_list_query = f"""SELECT * FROM project_belong WHERE user_id = '{user_id}';"""
 
-            cursor = self.db_manager.get_cursor()
             cursor.execute(get_project_list_query)
             result = cursor.fetchall() # 한 명이 여러 개의 프로젝트도 가능
             
@@ -150,6 +163,8 @@ class APImanager:
             query = f"""SELECT * FROM schedule WHERE user_id = '{user_id}';"""
             cursor.execute(query)
             result = cursor.fetchall()
+            cursor.close()
+            conn.close()
 
             schedule_list = []
             for item in result:
@@ -166,7 +181,9 @@ class APImanager:
     def API_register_project(self, name, leader, description, team_list): # Project Leader 추가하기 - 받아와야함
         try :
             query = f"""INSERT INTO project(project_name, project_description, project_leader) VALUES('{name}', '{description}','{leader}');"""
-            cursor = self.db_manager.get_cursor()
+            
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             cursor.execute(query)
             
             project_id = cursor.lastrowid 
@@ -179,31 +196,36 @@ class APImanager:
                 query = f"""INSERT INTO project_belong(project_id, user_id) VALUES({str(project_id)},'{team}');"""
                 cursor.execute(query)
 
-            self.db_manager.get_conn().commit()
+            conn.commit()
+            cursor.close()
+            conn.close()
             return TRUE
         
         except Exception as e:
             print(f"Error in API_register-project : {e}")
             traceback.print_exc()
-            self.db_manager.get_conn().rollback()
+            conn.rollback()
             return ERROR
         
     def API_delete_project(self, project_id):
         try :
             query = f"""DELETE FROM project_belong WHERE project_id = {str(project_id)};"""
-            cursor = self.db_manager.get_cursor()
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             cursor.execute(query)
 
             query = f"""DELETE FROM project WHERE project_id = {str(project_id)};"""
             cursor.execute(query)
             
             self.db_manager.get_conn().commit()
+            cursor.close()
+            conn.close()
             return TRUE
         
         except Exception as e:
             print(f"Error in API_delete_project : {e}")
             traceback.print_exc()
-            self.db_manager.get_conn().rollback()
+            conn.rollback()
             return ERROR
         
 
@@ -211,7 +233,8 @@ class APImanager:
         try :
             # 유효성 검사 user_id project leader인지 확인 - 다른 사람이 삭제했을 수도 있음
             #query = f"""SELECT * FROM project WHERE project_leader = '{user_id}' AND project_id = {str(project_id)};"""
-            cursor = self.db_manager.get_cursor()
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             #cursor.execute(query)
             #result = cursor.fetchone() # Primary Key
             #if not result:
@@ -258,22 +281,25 @@ class APImanager:
                 query = f"""INSERT INTO appointment(project_id, appointment, appointment_check) VALUES({str(project_id)},'{app_text}','{app_check}');"""
                 cursor.execute(query)
 
-            self.db_manager.get_conn().commit()
+            conn.commit()
+            cursor.close()
+            conn.close()
             return TRUE
         
         except Exception as e:
             print(f"Error in API_alert_project : {e}")
             traceback.print_exc()
-            self.db_manager.get_conn().rollback()
+            conn.rollback()
             return ERROR
         
     def API_set_schedule(self, user_id, schedule_list):
         try:
 
             # user_id의 스케줄을 초기화
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             query = f"""DELETE FROM schedule WHERE user_id = '{user_id}';"""
 
-            cursor = self.db_manager.get_cursor()
             cursor.execute(query)
 
             for schedule in schedule_list:
@@ -287,11 +313,13 @@ class APImanager:
                     VALUES('{user_id}','{schedule_info}',{str(dayofweek)},{str(start_time)},{str(length)});"""
                 cursor.execute(query)
 
-            self.db_manager.get_conn().commit()
+            conn.commit()
+            cursor.close()
+            conn.close()
 
             return TRUE
         except Exception as e:
-            self.db_manager.get_conn().rollback()
+            connn.rollback()
             print(f"Error in API_set_schedule : {e}")
             traceback.print_exc()
             return ERROR
@@ -300,23 +328,28 @@ class APImanager:
         try :
             gather = [[0 for i in range(7)] for j in range(24)]
             person = [[[] for i in range(7)] for j in range(24)]
+            result_list = []
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
             for user in team:
-                cursor = self.db_manager.get_cursor()
 
                 query = f"""SELECT * FROM schedule WHERE user_id = '{user}';"""
                 cursor.execute(query)
                 result = cursor.fetchall()
+                result_list.extend(result)
+                
+            conn.close()
 
-                for schedule in result:
-                    id = schedule[1] # user_id
-                    x = schedule[4] # start_time
-                    y = schedule[3] # dayofweek
-                    t = schedule[5] # lenght
-                    i = 0
-                    while i<t:
-                        gather[x+i][y] += 1
-                        person[x+i][y].append(id)
-                        i+=1
+            for schedule in result_list:
+                id = schedule[1] # user_id
+                x = schedule[4] # start_time
+                y = schedule[3] # dayofweek
+                t = schedule[5] # lenght
+                i = 0
+                while i<t:
+                    gather[x+i][y] += 1
+                    person[x+i][y].append(id)
+                    i+=1
 
             return self.convert.convert_gather_schedule(gather, person)
 
