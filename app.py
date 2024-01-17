@@ -71,6 +71,7 @@ def register():
     # 3. password는 hash 값이라 256이하임.
     # 4. name 길이 1~10
     # 5. belong 길이 1~25
+    # + user_id 유일성 여부도 추가해야함
     
     if password != password_check:
         return CODE
@@ -124,6 +125,7 @@ def alert_project():
     project_name = str(data.get('project_name'))
     project_description = str(data.get('description'))
     team = data.get('participants').split(',')
+    team = list(map(lambda x: x.strip(), team))
     todo = data.get('todo') 
     appointment = data.get('appointment')
     #print(data)
@@ -148,6 +150,14 @@ def get_project_info():
     user_id = str(request.args.get('user_id'))
     project_id = int(request.args.get('project_id'))
     return api.API_get_project_info(user_id, project_id)
+
+@app.route('/change_leader', methods=['POST'])
+def change_leader():
+    data = request.json
+    user_id = str(data.get('user_id'))
+    project_id = int(data.get('project_id'))
+    leader_id = str(data.get('new_leader'))
+    return api.API_change_leader(user_id, project_id, leader_id)
 
 
 if __name__ == "__main__":

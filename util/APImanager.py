@@ -294,7 +294,6 @@ class APImanager:
         
     def API_set_schedule(self, user_id, schedule_list):
         try:
-
             # user_id의 스케줄을 초기화
             conn = self.db_manager.get_conn()
             cursor = conn.cursor()
@@ -416,3 +415,23 @@ class APImanager:
             print(f"Error in API_get_project_info : {e}")
             traceback.print_exc()
             return ERROR
+        
+    def API_change_leader(self, user_id, project_id, leader_id):
+        try:
+            conn = self.db_manager.get_conn()
+            cursor = conn.cursor()
+
+            query = f"""UPDATE project SET project_leader = '{leader_id}' WHERE project_id = {str(project_id)};"""
+
+            cursor.execute(query)
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+            return TRUE
+
+        except Exception as e:
+            print(f"Error in API_change_leader : {e}")
+            traceback.print_exc()
+            return ERROR
+

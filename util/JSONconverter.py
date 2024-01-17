@@ -106,6 +106,5 @@ class JSONconverter :
             schedule_converted_list.append(dic)
 
         json_dict['schedule'] = schedule_converted_list
-        print(json.dumps(json_dict, ensure_ascii=False))
         return json.dumps(json_dict, ensure_ascii=False)
 
