@@ -214,6 +214,12 @@ class APImanager:
             cursor = conn.cursor()
             cursor.execute(query)
 
+            query = f"""DELETE FROM todo WHERE project_id = {str(project_id)};"""
+            cursor.execute(query)
+
+            query = f"""DELETE FROM appointment WHERE project_id = {str(project_id)};"""
+            cursor.execute(query)
+
             query = f"""DELETE FROM project WHERE project_id = {str(project_id)};"""
             cursor.execute(query)
             
@@ -342,7 +348,7 @@ class APImanager:
             for schedule in result_list:
                 id = schedule[1] # user_id
                 x = schedule[4] # start_time
-                y = schedule[3] # dayofweek
+                y = schedule[3]-1 # dayofweek
                 t = schedule[5] # lenght
                 i = 0
                 while i<t:
